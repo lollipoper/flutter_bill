@@ -7,19 +7,34 @@ import 'package:image_picker/image_picker.dart';
 
 //图片选择组件
 class PictureSelector extends StatefulWidget {
+  List<File> images = new List();
+
   @override
   State<StatefulWidget> createState() {
     return _PictureSelectorState();
   }
+
+  String getSelectedImages() {
+    StringBuffer buffer = new StringBuffer();
+    for (int i = 0; i < images.length; i++) {
+      if (images[0].path.isNotEmpty) {
+        buffer.write(images[i].path);
+        buffer.write(",");
+      }
+    }
+    if (buffer.isNotEmpty) {
+      return buffer.toString().substring(0, buffer.length - 1);
+    } else {
+      return null;
+    }
+  }
 }
 
 class _PictureSelectorState extends State<PictureSelector> {
-  List<File> images = new List();
-
   @override
   Widget build(BuildContext context) {
-    if (images.isEmpty) {
-      images.add(new File(""));
+    if (widget.images.isEmpty) {
+      widget.images.add(new File(""));
     }
     return new GridView.count(
       padding: EdgeInsets.only(left: 15.0, right: 15.0),
@@ -66,7 +81,7 @@ class _PictureSelectorState extends State<PictureSelector> {
                 ),
                 onTap: () {
                   setState(() {
-                    images.remove(image);
+                    widget.images.remove(image);
                   });
                 },
               ),
@@ -79,15 +94,15 @@ class _PictureSelectorState extends State<PictureSelector> {
     var pickImage = await ImagePicker.pickImage(source: ImageSource.gallery);
     if (pickImage != null) {
       setState(() {
-        images.insert(images.length - 1, pickImage);
+        widget.images.insert(widget.images.length - 1, pickImage);
       });
     }
   }
 
   List<Widget> _buildList() {
     List<Widget> widgets = new List();
-    for (int i = 0; i < images.length; i++) {
-      widgets.add(_generateImage(images[i]));
+    for (int i = 0; i < widget.images.length; i++) {
+      widgets.add(_generateImage(widget.images[i]));
     }
     return widgets;
   }
