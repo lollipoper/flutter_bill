@@ -8,6 +8,9 @@ import 'package:image_picker/image_picker.dart';
 //图片选择组件
 class PictureSelector extends StatefulWidget {
   List<File> images = new List();
+  bool preview;
+
+  PictureSelector({this.images, this.preview = false});
 
   @override
   State<StatefulWidget> createState() {
@@ -46,16 +49,52 @@ class _PictureSelectorState extends State<PictureSelector> {
   }
 
   Widget _generateImage(File image) {
-    if (image.path.isEmpty) {
-      return new GestureDetector(
-          onTap: () {
-            _getImage();
-          },
-          child: new Center(
-            child: new Icon(Icons.add_circle_outline,
-                color: Theme.of(context).primaryColor),
-          ));
+    if (!widget.preview) {
+      //编辑模式
+      if (image.path.isEmpty) {
+        return new GestureDetector(
+            onTap: () {
+              _getImage();
+            },
+            child: new Center(
+              child: new Icon(Icons.add_circle_outline,
+                  color: Theme.of(context).primaryColor),
+            ));
+      } else {
+        return new GestureDetector(
+            onTap: () {},
+            child: Stack(
+              children: <Widget>[
+                ConstrainedBox(
+                  constraints: BoxConstraints.expand(height: 130.0),
+                  child: Padding(
+                      padding: EdgeInsets.only(right: 10.0, top: 10.0),
+                      child: new Image.file(
+                        image,
+                        fit: BoxFit.cover,
+                        width: 5.0,
+                        height: 5.0,
+                      )),
+                ),
+                new GestureDetector(
+                  child: Align(
+                    child: Icon(
+                      Icons.remove_circle_outline,
+                      color: Theme.of(context).primaryColor,
+                    ),
+                    alignment: Alignment.topRight,
+                  ),
+                  onTap: () {
+                    setState(() {
+                      widget.images.remove(image);
+                    });
+                  },
+                ),
+              ],
+            ));
+      }
     } else {
+      //预览模式
       return new GestureDetector(
           onTap: () {},
           child: Stack(
@@ -70,20 +109,6 @@ class _PictureSelectorState extends State<PictureSelector> {
                       width: 5.0,
                       height: 5.0,
                     )),
-              ),
-              new GestureDetector(
-                child: Align(
-                  child: Icon(
-                    Icons.remove_circle_outline,
-                    color: Theme.of(context).primaryColor,
-                  ),
-                  alignment: Alignment.topRight,
-                ),
-                onTap: () {
-                  setState(() {
-                    widget.images.remove(image);
-                  });
-                },
               ),
             ],
           ));

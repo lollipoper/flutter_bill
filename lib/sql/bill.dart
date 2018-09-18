@@ -69,6 +69,16 @@ class BillProvider {
     );
   }
 
+  Future<List<Bill>> getBills() async {
+    List<Map> rawQuery = await db.rawQuery("Select * from $tableBill");
+    List<Bill> list = new List();
+    rawQuery.forEach((Map map) {
+      var bill = Bill.fromMap(map);
+      list.add(bill);
+    });
+    return list;
+  }
+
   Future insert(Bill bill) async {
     bill.billId = DateTime.now().millisecond.toString();
     bill.categoryId = "12";
@@ -83,7 +93,8 @@ class BillProvider {
           columnPhone,
           columnContact,
           columnRemark,
-          columnId
+          columnId,
+          columnTitle
         ],
         where: "$columnId =  ?",
         whereArgs: [billId]);
@@ -94,8 +105,8 @@ class BillProvider {
     }
   }
 
-  Future<int> delete(String billid) async {
-    return db.delete(tableBill, where: "$columnId = ?", whereArgs: [billid]);
+  Future<int> delete(String billId) async {
+    return db.delete(tableBill, where: "$columnId = ?", whereArgs: [billId]);
   }
 
   Future<int> update(Bill bill) async {
