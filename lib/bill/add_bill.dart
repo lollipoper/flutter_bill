@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bill/sql/bill.dart';
@@ -7,8 +9,9 @@ import 'package:sqflite/sqflite.dart';
 
 class AddBillPage extends StatefulWidget {
   final String title;
+  final Bill bill;
 
-  AddBillPage({Key key, this.title}) : super(key: key);
+  AddBillPage({Key key, this.title, this.bill}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() {
@@ -30,6 +33,18 @@ class _AddBillPageState extends State<AddBillPage> {
   @override
   void initState() {
     super.initState();
+    if (widget.bill != null) {
+      titleEditController = TextEditingController(text: widget.bill.title);
+      remarkController = TextEditingController(text: widget.bill.remark);
+      contactController = TextEditingController(text: widget.bill.contact);
+      phoneController = TextEditingController(text: widget.bill.phone);
+      pictureSelector = PictureSelector(
+        images: widget.bill.images.split(",").map((String image) {
+          return new File(image);
+        }).toList(),
+        preview: false,
+      );
+    }
     initDb();
   }
 
@@ -116,16 +131,29 @@ class _AddBillPageState extends State<AddBillPage> {
   void _uploadBill() async {
     var billProvider = BillProvider();
     await billProvider.open(_path);
-    var bill = new Bill();
-    bill.title = titleEditController.text;
-    bill.remark = remarkController.text;
-    bill.contact = contactController.text;
-    bill.phone = phoneController.text;
-    bill.images = pictureSelector.getSelectedImages();
-    var insert = await billProvider.insert(bill);
-    if (insert != null) {
-      print("上传票据成功~");
-      Navigator.pop(context, true);
+    if (widget.bill != null) {
+      widget.bill.title = titleEditController.text;
+      widget.bill.remark = remarkController.text;
+      widget.bill.contact = contactController.text;
+      widget.bill.phone = phoneController.text;
+      widget.bill.images = pictureSelector.getSelectedImages();
+      var update = await billProvider.update(widget.bill);
+      if (update != null) {
+        print("修改票据成功~");
+        Navigator.pop(context, true);
+      }
+    } else {
+      var bill = new Bill();
+      bill.title = titleEditController.text;
+      bill.remark = remarkController.text;
+      bill.contact = contactController.text;
+      bill.phone = phoneController.text;
+      bill.images = pictureSelector.getSelectedImages();
+      var insert = await billProvider.insert(bill);
+      if (insert != null) {
+        print("上传票据成功~");
+        Navigator.pop(context, true);
+      }
     }
   }
 }

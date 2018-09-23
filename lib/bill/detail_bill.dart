@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bill/bill/add_bill.dart';
 import 'package:flutter_bill/sql/bill.dart';
 import 'package:flutter_bill/view/picture_selector.dart';
 import 'package:path/path.dart';
@@ -22,18 +23,32 @@ class DetailBillPage extends StatefulWidget {
 class _DetailBillPageState extends State<DetailBillPage> {
   Bill _bill = new Bill();
   var billProvider = BillProvider();
+  BuildContext context;
 
   @override
   void initState() {
     super.initState();
-    initDb();
+    getBillDetail();
   }
 
   @override
   Widget build(BuildContext context) {
+    this.context = context;
     return new Scaffold(
       appBar: new AppBar(
         title: new Text(widget.title ?? widget.title),
+        actions: <Widget>[
+          IconButton(
+            icon: Icon(Icons.mode_edit),
+            tooltip: "edit bill",
+            onPressed: _modifyBill,
+          ),
+          IconButton(
+            icon: Icon(Icons.delete),
+            tooltip: "delete bill",
+            onPressed: _deleteBill,
+          )
+        ],
       ),
       body: new ListView(
         children: <Widget>[
@@ -98,7 +113,36 @@ class _DetailBillPageState extends State<DetailBillPage> {
     );
   }
 
-  void initDb() async {
+  // ignore: missing_return
+  void _deleteBill() {
+    print("delete bill");
+    showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return new AlertDialog(
+            title: Text("删除票据"),
+            content: Text("确定删除票据，删除后数据将丢失！"),
+            actions: <Widget>[
+              FlatButton(
+                  onPressed: () =>
+                      billProvider.delete(widget.billId).then((int) {
+                        if (int > 0) Navigator.pop(context, true);
+                      }).whenComplete(() {
+                        Navigator.pop(context);
+                      }),
+                  child: Text("确定")),
+              FlatButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: Text("取消"))
+            ],
+          );
+        });
+  }
+
+  void getBillDetail() async {
     Sqflite.setDebugModeOn(true);
     getDatabasesPath().then((dbPath) {
       return billProvider.open(join(dbPath, "db.db")).then((db) {
@@ -109,5 +153,16 @@ class _DetailBillPageState extends State<DetailBillPage> {
         });
       });
     });
+  }
+
+  void _modifyBill() {
+    print("edit bill");
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (BuildContext context) => AddBillPage(
+                  title: "编辑票据",
+                  bill: _bill,
+                )));
   }
 }

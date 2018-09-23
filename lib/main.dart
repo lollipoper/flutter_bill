@@ -7,6 +7,7 @@ import 'package:flutter_bill/bill/detail_bill.dart';
 import 'package:flutter_bill/sql/bill.dart';
 import 'package:path/path.dart' show join;
 import 'package:sqflite/sqflite.dart';
+import 'dart:math';
 
 Future<void> main() async {
   runApp(new MyApp());
@@ -29,11 +30,7 @@ class MyApp extends StatelessWidget {
         // counter didn't reset back to zero; the application is not restarted.
         primarySwatch: Colors.blue,
       ),
-      home: new MyHomePage(title: 'Flutter Demo Home Page'),
-      routes: <String, WidgetBuilder>{
-        '/addBill': (BuildContext context) => AddBillPage(title: "添加票据"),
-        '/detailBill': (BuildContext context) => DetailBillPage(title: "票据详情"),
-      },
+      home: new MyHomePage(title: '票据管理'),
     );
   }
 }
@@ -113,12 +110,16 @@ class _MyHomePageState extends State<MyHomePage> {
             });
           });
         },
-        child: new ListView(
-          physics: AlwaysScrollableScrollPhysics(),
-          children: mList.map((Bill bill) {
-            return generateItem(bill);
-          }).toList(),
-        ),
+        child: new ListView.builder(
+            physics: AlwaysScrollableScrollPhysics(),
+            itemCount: max(1, mList.length),
+            itemBuilder: (BuildContext context, int index) {
+              if (mList.isNotEmpty) {
+                return generateItem(index);
+              } else {
+                return emptyView();
+              }
+            }),
       ),
       floatingActionButton: new FloatingActionButton(
         onPressed: _incrementCounter,
@@ -128,42 +129,50 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  Widget generateItem(Bill bill) {
+  Widget generateItem(int index) {
     return GestureDetector(
       behavior: HitTestBehavior.translucent, //点击事件透传
-      onTap: () {
-        print("list item click" + bill.billId);
-        Navigator.push(
+      onTap: () async {
+        var result = await Navigator.push(
             context,
             MaterialPageRoute(
-                builder: (context) =>
-                    DetailBillPage(title: "票据详情", billId: bill.billId)));
+                builder: (context) => DetailBillPage(
+                    title: "票据详情", billId: mList[index].billId)));
+        if (result ?? result) {
+          getList();
+        }
       },
       child: Container(
-        padding: const EdgeInsets.all(8.0),
-        child: new Row(
-          children: <Widget>[
-            Expanded(
-              child: new Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+          padding: const EdgeInsets.all(8.0),
+          child: new Column(
+            children: <Widget>[
+              new Row(
                 children: <Widget>[
-                  Container(
-                    child: Text(bill.title),
-                    padding: const EdgeInsets.only(bottom: 8.0),
+                  Expanded(
+                    child: new Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Container(
+                          child: Text(mList[index].title),
+                          padding: const EdgeInsets.only(bottom: 8.0),
+                        ),
+                        Text(mList[index].categoryId)
+                      ],
+                    ),
                   ),
-                  Text(bill.categoryId)
+                  Image.file(
+                    File(mList[index]
+                        .images
+                        .substring(0, mList[index].images.indexOf(","))),
+                    width: 40.0,
+                    fit: BoxFit.cover,
+                    height: 40.0,
+                  )
                 ],
               ),
-            ),
-            Image.file(
-              File(bill.images.substring(0, bill.images.indexOf(","))),
-              width: 40.0,
-              fit: BoxFit.cover,
-              height: 40.0,
-            )
-          ],
-        ),
-      ),
+              new Divider(),
+            ],
+          )),
     );
   }
 
@@ -176,4 +185,11 @@ class _MyHomePageState extends State<MyHomePage> {
       });
     });
   }
+}
+
+Widget emptyView() {
+  return new Container(
+    padding: const EdgeInsets.all(8.0),
+    child: Text("暂无数据"),
+  );
 }
