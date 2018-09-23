@@ -7,8 +7,8 @@ import 'package:image_picker/image_picker.dart';
 
 //图片选择组件
 class PictureSelector extends StatefulWidget {
-  List<File> images = new List();
-  bool preview;
+  final List<File> images;
+  final bool preview;
 
   PictureSelector({this.images, this.preview = false});
 

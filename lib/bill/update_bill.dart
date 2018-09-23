@@ -7,11 +7,11 @@ import 'package:flutter_bill/view/picture_selector.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
-class AddBillPage extends StatefulWidget {
+class EditBillPage extends StatefulWidget {
   final String title;
   final Bill bill;
 
-  AddBillPage({Key key, this.title, this.bill}) : super(key: key);
+  EditBillPage({Key key, this.title, this.bill}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() {
@@ -19,7 +19,7 @@ class AddBillPage extends StatefulWidget {
   }
 }
 
-class _AddBillPageState extends State<AddBillPage> {
+class _AddBillPageState extends State<EditBillPage> {
   var _path;
   var titleEditController = TextEditingController();
   var remarkController = TextEditingController();

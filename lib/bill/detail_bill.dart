@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bill/bill/add_bill.dart';
+import 'package:flutter_bill/bill/update_bill.dart';
 import 'package:flutter_bill/sql/bill.dart';
 import 'package:flutter_bill/view/picture_selector.dart';
 import 'package:path/path.dart';
@@ -160,7 +160,7 @@ class _DetailBillPageState extends State<DetailBillPage> {
     Navigator.push(
         context,
         MaterialPageRoute(
-            builder: (BuildContext context) => AddBillPage(
+            builder: (BuildContext context) => EditBillPage(
                   title: "编辑票据",
                   bill: _bill,
                 )));
