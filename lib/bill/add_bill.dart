@@ -22,7 +22,10 @@ class _AddBillPageState extends State<AddBillPage> {
   var remarkController = TextEditingController();
   var contactController = TextEditingController();
   var phoneController = TextEditingController();
-  var pictureSelector = PictureSelector();
+  var pictureSelector = PictureSelector(
+    images: new List(),
+  );
+  var context;
 
   @override
   void initState() {
@@ -32,6 +35,7 @@ class _AddBillPageState extends State<AddBillPage> {
 
   @override
   Widget build(BuildContext context) {
+    this.context = context;
     return new Scaffold(
       appBar: new AppBar(
         title: new Text(widget.title),
@@ -121,6 +125,7 @@ class _AddBillPageState extends State<AddBillPage> {
     var insert = await billProvider.insert(bill);
     if (insert != null) {
       print("上传票据成功~");
+      Navigator.pop(context, true);
     }
   }
 }

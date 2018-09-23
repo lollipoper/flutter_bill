@@ -61,8 +61,16 @@ class _MyHomePageState extends State<MyHomePage> {
   var _billProvider = BillProvider();
   var path;
 
-  void _incrementCounter() {
-    Navigator.pushNamed(context, "/addBill");
+  void _incrementCounter() async {
+    final result = await Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => AddBillPage(
+                  title: "添加票据",
+                )));
+    if (result ?? result) {
+      getList();
+    }
   }
 
   void initDb() async {
@@ -124,11 +132,12 @@ class _MyHomePageState extends State<MyHomePage> {
     return GestureDetector(
       behavior: HitTestBehavior.translucent, //点击事件透传
       onTap: () {
-        print("list item click"+bill.billId);
-//        Navigator.push(context, MaterialPageRoute(builder: (context) {
-//          new DetailBillPage(title: "票据详情", billId: bill.billId);
-//        }));
-        Navigator.pushNamed(context, "/detailBill");
+        print("list item click" + bill.billId);
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) =>
+                    DetailBillPage(title: "票据详情", billId: bill.billId)));
       },
       child: Container(
         padding: const EdgeInsets.all(8.0),

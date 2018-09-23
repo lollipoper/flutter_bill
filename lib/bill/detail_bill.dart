@@ -102,7 +102,7 @@ class _DetailBillPageState extends State<DetailBillPage> {
     Sqflite.setDebugModeOn(true);
     getDatabasesPath().then((dbPath) {
       return billProvider.open(join(dbPath, "db.db")).then((db) {
-        return billProvider.getBill("755").then((Bill bill) {
+        return billProvider.getBill(widget.billId).then((Bill bill) {
           setState(() {
             _bill = bill;
           });
