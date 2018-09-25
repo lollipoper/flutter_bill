@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/cupertino.dart';
@@ -126,11 +127,53 @@ class _CategoryListPageState extends State<CategoryListPage> {
           Navigator.pop(context, mList[index]);
         },
         child: Container(
-          padding: const EdgeInsets.all(8.0),
+          padding: const EdgeInsets.all(15.0),
           child: Row(
-            children: <Widget>[Text(mList[index].title)],
+            children: <Widget>[
+              Text(mList[index].title),
+              IconButton(
+                  icon: Icon(Icons.edit),
+                  onPressed: () async {
+                    await _showEditCategoryDialog(index);
+                  })
+            ],
           ),
         ));
+  }
+
+  Future _showEditCategoryDialog(int index) async {
+    textEditingController.text = mList[index].title;
+    showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text("修改分类"),
+            content: TextField(
+              controller: textEditingController,
+              decoration: InputDecoration(hintText: "请输入分类名"),
+            ),
+            actions: <Widget>[
+              FlatButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: Text("取消")),
+              FlatButton(
+                  onPressed: () async {
+                    await _editCategory(context, index);
+                  },
+                  child: Text("修改"))
+            ],
+          ).build(context);
+        });
+  }
+
+  Future _editCategory(BuildContext context, int index) async {
+    Navigator.pop(context);
+    await _billProvider
+        .update(mList[index]..title = textEditingController.text);
+    getList();
   }
 
   void getList() async {
