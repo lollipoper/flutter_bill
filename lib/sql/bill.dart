@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:flutter_bill/sql/category.dart';
+import 'package:path/path.dart' show join;
 import 'package:sqflite/sqflite.dart';
 
 final String tableBill = "Bill";
@@ -16,6 +18,7 @@ class Bill {
   String title;
   String remark;
   String categoryId;
+  String categoryName;
   String contact;
   String phone;
   String images;
@@ -51,20 +54,26 @@ class Bill {
 class BillProvider {
   Database db;
 
-  Future open(String path) async {
-    db = await openDatabase(
-      path,
-      version: 1,
-      onCreate: (Database db, int version) async {
-        String sql = '''create table $tableBill(
+  static Future createTable(Database db) async {
+    String sql = '''create table $tableBill(
             $columnId        text primary key, 
             $columnTitle     text not null,
             $columnRemark    text,
             $columnContact   text,
             $columnPhone     text,
-            $columnCategory  text not null,
+            $columnCategory  text,
             $columnImages    text not null)''';
-        await db.execute(sql);
+    await db.execute(sql);
+  }
+
+  Future open() async {
+    var databasesPath = await getDatabasesPath();
+    db = await openDatabase(
+      join(databasesPath, "db.db"),
+      version: 1,
+      onCreate: (Database db, int version) async {
+        BillProvider.createTable(db);
+        CategoryProvider.createTable(db);
       },
     );
   }
@@ -81,7 +90,6 @@ class BillProvider {
 
   Future insert(Bill bill) async {
     bill.billId = DateTime.now().millisecond.toString();
-    bill.categoryId = "12";
     return db.insert(tableBill, bill.toMap());
   }
 

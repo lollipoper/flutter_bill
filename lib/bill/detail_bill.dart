@@ -4,8 +4,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bill/bill/update_bill.dart';
 import 'package:flutter_bill/sql/bill.dart';
+import 'package:flutter_bill/sql/category.dart';
 import 'package:flutter_bill/view/picture_selector.dart';
-import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
 class DetailBillPage extends StatefulWidget {
@@ -55,46 +55,31 @@ class _DetailBillPageState extends State<DetailBillPage> {
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: new Row(
-              children: <Widget>[
-                Text("票据标题"),
-                Text(_bill.title ?? _bill.title)
-              ],
+              children: <Widget>[Text("票据标题"), Text(_bill.title ?? "暂无")],
             ),
           ),
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: new Row(
-              children: <Widget>[
-                Text("备注"),
-                Text(_bill.remark ?? _bill.remark)
-              ],
+              children: <Widget>[Text("备注"), Text(_bill.remark ?? "暂无")],
             ),
           ),
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: new Row(
-              children: <Widget>[
-                Text("联系人"),
-                Text(_bill.contact ?? _bill.contact)
-              ],
+              children: <Widget>[Text("联系人"), Text(_bill.contact ?? "暂无")],
             ),
           ),
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: new Row(
-              children: <Widget>[
-                Text("联系方式"),
-                Text(_bill.phone ?? _bill.phone)
-              ],
+              children: <Widget>[Text("联系方式"), Text(_bill.phone ?? "暂无")],
             ),
           ),
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: new Row(
-              children: <Widget>[
-                Text("分类"),
-                Text(_bill.categoryId ?? _bill.categoryId)
-              ],
+              children: <Widget>[Text("分类"), Text(_bill.categoryName ?? "其它")],
             ),
           ),
           ConstrainedBox(
@@ -125,6 +110,11 @@ class _DetailBillPageState extends State<DetailBillPage> {
             content: Text("确定删除票据，删除后数据将丢失！"),
             actions: <Widget>[
               FlatButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: Text("取消")),
+              FlatButton(
                   onPressed: () =>
                       billProvider.delete(widget.billId).then((int) {
                         if (int > 0) Navigator.pop(context, true);
@@ -132,11 +122,6 @@ class _DetailBillPageState extends State<DetailBillPage> {
                         Navigator.pop(context);
                       }),
                   child: Text("确定")),
-              FlatButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  child: Text("取消"))
             ],
           );
         });
@@ -144,25 +129,41 @@ class _DetailBillPageState extends State<DetailBillPage> {
 
   void getBillDetail() async {
     Sqflite.setDebugModeOn(true);
-    getDatabasesPath().then((dbPath) {
-      return billProvider.open(join(dbPath, "db.db")).then((db) {
-        return billProvider.getBill(widget.billId).then((Bill bill) {
-          setState(() {
-            _bill = bill;
+    billProvider.open().then((db) {
+      return billProvider.getBill(widget.billId).then((Bill bill) {
+        var category = CategoryProvider();
+        category.open().then((db) {
+          return category
+              .getCategory(bill.categoryId)
+              .then((Category category) {
+            bill.categoryName = category.title;
+            setState(() {
+              setState(() {
+                _bill = bill;
+              });
+            });
           });
+        });
+        setState(() {
+          _bill = bill;
         });
       });
     });
   }
 
-  void _modifyBill() {
+  void _modifyBill() async {
     print("edit bill");
-    Navigator.push(
+    Bill result = await Navigator.push(
         context,
         MaterialPageRoute(
             builder: (BuildContext context) => EditBillPage(
                   title: "编辑票据",
                   bill: _bill,
                 )));
+    if (result != null) {
+      setState(() {
+        _bill = result;
+      });
+    }
   }
 }

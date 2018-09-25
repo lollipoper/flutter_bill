@@ -2,9 +2,10 @@ import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bill/bill/category/category_list.dart';
 import 'package:flutter_bill/sql/bill.dart';
+import 'package:flutter_bill/sql/category.dart';
 import 'package:flutter_bill/view/picture_selector.dart';
-import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
 class EditBillPage extends StatefulWidget {
@@ -15,12 +16,13 @@ class EditBillPage extends StatefulWidget {
 
   @override
   State<StatefulWidget> createState() {
-    return new _AddBillPageState();
+    return new _EditBillPageState();
   }
 }
 
-class _AddBillPageState extends State<EditBillPage> {
-  var _path;
+class _EditBillPageState extends State<EditBillPage> {
+  Category _selectedCategory;
+  CategoryProvider provider;
   var titleEditController = TextEditingController();
   var remarkController = TextEditingController();
   var contactController = TextEditingController();
@@ -29,6 +31,7 @@ class _AddBillPageState extends State<EditBillPage> {
     images: new List(),
   );
   var context;
+  var billProvider = BillProvider();
 
   @override
   void initState() {
@@ -44,7 +47,16 @@ class _AddBillPageState extends State<EditBillPage> {
         }).toList(),
         preview: false,
       );
+      provider = CategoryProvider();
+      provider.open().then((db) {
+        provider.getCategory(widget.bill.categoryId).then((Category category) {
+          setState(() {
+            _selectedCategory = category;
+          });
+        });
+      });
     }
+    _selectedCategory = Category();
     initDb();
   }
 
@@ -58,6 +70,21 @@ class _AddBillPageState extends State<EditBillPage> {
       body: new ListView(
         children: <Widget>[
           Padding(
+            padding: const EdgeInsets.all(15.0),
+            child: GestureDetector(
+              onTap: _selectCategory,
+              child: new Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: <Widget>[
+                  Expanded(child: Text("选择分类")),
+                  Text(_selectedCategory.title ?? "请选择"),
+                  Icon(Icons.keyboard_arrow_right)
+                ],
+              ),
+            ),
+          ),
+          Divider(),
+          Padding(
             padding: const EdgeInsets.only(left: 15.0, right: 15.0),
             child: TextField(
               maxLengthEnforced: false,
@@ -69,6 +96,7 @@ class _AddBillPageState extends State<EditBillPage> {
               ),
             ),
           ),
+          Divider(),
           Padding(
             padding: const EdgeInsets.only(left: 15.0, right: 15.0),
             child: TextField(
@@ -81,6 +109,7 @@ class _AddBillPageState extends State<EditBillPage> {
               ),
             ),
           ),
+          Divider(),
           Padding(
             padding: const EdgeInsets.only(left: 15.0, right: 15.0),
             child: TextField(
@@ -91,6 +120,7 @@ class _AddBillPageState extends State<EditBillPage> {
                   new InputDecoration(labelText: "联系人", hintText: "输入联系人"),
             ),
           ),
+          Divider(),
           Padding(
             padding: const EdgeInsets.only(left: 15.0, right: 15.0),
             child: TextField(
@@ -103,10 +133,11 @@ class _AddBillPageState extends State<EditBillPage> {
               ),
             ),
           ),
+          Divider(),
           Padding(
             padding: const EdgeInsets.only(
                 top: 10.0, left: 15.0, right: 15.0, bottom: 10.0),
-            child: Text("票据文件夹"),
+            child: Text("票据文件"),
           ),
           ConstrainedBox(
             constraints: BoxConstraints.expand(height: 300.0),
@@ -124,23 +155,22 @@ class _AddBillPageState extends State<EditBillPage> {
 
   void initDb() async {
     Sqflite.setDebugModeOn(true);
-    var dbPath = await getDatabasesPath();
-    _path = join(dbPath, "db.db");
+    await billProvider.open();
   }
 
   void _uploadBill() async {
-    var billProvider = BillProvider();
-    await billProvider.open(_path);
     if (widget.bill != null) {
       widget.bill.title = titleEditController.text;
       widget.bill.remark = remarkController.text;
       widget.bill.contact = contactController.text;
       widget.bill.phone = phoneController.text;
       widget.bill.images = pictureSelector.getSelectedImages();
+      widget.bill.categoryId = _selectedCategory.categoryId;
+      widget.bill.categoryName = _selectedCategory.title;
       var update = await billProvider.update(widget.bill);
       if (update != null) {
         print("修改票据成功~");
-        Navigator.pop(context, true);
+        Navigator.pop(context, widget.bill);
       }
     } else {
       var bill = new Bill();
@@ -149,11 +179,24 @@ class _AddBillPageState extends State<EditBillPage> {
       bill.contact = contactController.text;
       bill.phone = phoneController.text;
       bill.images = pictureSelector.getSelectedImages();
+      bill.categoryId = _selectedCategory.categoryId;
       var insert = await billProvider.insert(bill);
       if (insert != null) {
         print("上传票据成功~");
         Navigator.pop(context, true);
       }
     }
+  }
+
+  void _selectCategory() async {
+    var result = await Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (BuildContext context) => CategoryListPage(
+                  title: "选择分类",
+                )));
+    setState(() {
+      _selectedCategory = result ?? Category();
+    });
   }
 }

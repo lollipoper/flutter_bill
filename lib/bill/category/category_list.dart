@@ -1,15 +1,13 @@
-import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bill/bill/detail_bill.dart';
-import 'package:flutter_bill/bill/update_bill.dart';
-import 'package:flutter_bill/sql/bill.dart';
+import 'package:flutter_bill/sql/category.dart';
+import 'package:path/path.dart' show join;
 import 'package:sqflite/sqflite.dart';
 
-class BillListPage extends StatefulWidget {
-  BillListPage({Key key, this.title}) : super(key: key);
+class CategoryListPage extends StatefulWidget {
+  CategoryListPage({Key key, this.title}) : super(key: key);
 
   // This widget is the home page of your application. It is stateful, meaning
   // that it has a State object (defined below) that contains fields that affect
@@ -23,28 +21,49 @@ class BillListPage extends StatefulWidget {
   final String title;
 
   @override
-  _MyHomePageState createState() => new _MyHomePageState();
+  _CategoryListPageState createState() => new _CategoryListPageState();
 }
 
-class _MyHomePageState extends State<BillListPage> {
-  List<Bill> mList = new List();
-  var _billProvider = BillProvider();
+class _CategoryListPageState extends State<CategoryListPage> {
+  List<Category> mList = new List();
+  var _billProvider = CategoryProvider();
+  var textEditingController = TextEditingController();
   var path;
 
-  void _addBill() async {
-    final result = await Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (context) => EditBillPage(
-                  title: "添加票据",
-                )));
-    if (result != null) {
-      getList();
-    }
+  void _addCategory() async {
+    showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text("新增分类"),
+            content: TextField(
+              controller: textEditingController,
+              decoration: InputDecoration(hintText: "请输入分类名"),
+            ),
+            actions: <Widget>[
+              FlatButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: Text("取消")),
+              FlatButton(
+                  onPressed: () async {
+                    Navigator.pop(context);
+                    await _billProvider.insert(
+                        new Category(title: textEditingController.text));
+                    getList();
+                  },
+                  child: Text("确定"))
+            ],
+          ).build(context);
+        });
   }
 
   void initDb() async {
     Sqflite.setDebugModeOn(true);
+    var dbPath = await getDatabasesPath();
+    path = join(dbPath, "db.db");
     getList();
   }
 
@@ -73,7 +92,7 @@ class _MyHomePageState extends State<BillListPage> {
           mList.clear();
 
           _billProvider.open().then((db) {
-            _billProvider.getBills().then((List<Bill> data) {
+            _billProvider.getCategories().then((List<Category> data) {
               setState(() {
                 mList = data;
               });
@@ -93,8 +112,8 @@ class _MyHomePageState extends State<BillListPage> {
             }),
       ),
       floatingActionButton: new FloatingActionButton(
-        onPressed: _addBill,
-        tooltip: 'add bill',
+        onPressed: _addCategory,
+        tooltip: 'add category',
         child: new Icon(Icons.add),
       ), // This trailing comma makes auto-formatting nicer for build methods.
     );
@@ -102,54 +121,21 @@ class _MyHomePageState extends State<BillListPage> {
 
   Widget generateItem(int index) {
     return GestureDetector(
-      behavior: HitTestBehavior.translucent, //点击事件透传
-      onTap: () async {
-        var result = await Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (context) => DetailBillPage(
-                    title: "票据详情", billId: mList[index].billId)));
-        if (result ?? false) {
-          getList();
-        }
-      },
-      child: Container(
+        behavior: HitTestBehavior.translucent, //点击事件透传
+        onTap: () async {
+          Navigator.pop(context, mList[index]);
+        },
+        child: Container(
           padding: const EdgeInsets.all(8.0),
-          child: new Column(
-            children: <Widget>[
-              new Row(
-                children: <Widget>[
-                  Expanded(
-                    child: new Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Container(
-                          child: Text(mList[index].title),
-                          padding: const EdgeInsets.only(bottom: 8.0),
-                        ),
-                        Text(mList[index].categoryId)
-                      ],
-                    ),
-                  ),
-                  Image.file(
-                    File(mList[index]
-                        .images
-                        .substring(0, mList[index].images.indexOf(","))),
-                    width: 40.0,
-                    fit: BoxFit.cover,
-                    height: 40.0,
-                  )
-                ],
-              ),
-              new Divider(),
-            ],
-          )),
-    );
+          child: Row(
+            children: <Widget>[Text(mList[index].title)],
+          ),
+        ));
   }
 
   void getList() async {
     _billProvider.open().then((db) {
-      _billProvider.getBills().then((List<Bill> data) {
+      _billProvider.getCategories().then((List<Category> data) {
         setState(() {
           mList = data;
         });
