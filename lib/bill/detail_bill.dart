@@ -52,46 +52,87 @@ class _DetailBillPageState extends State<DetailBillPage> {
       ),
       body: new ListView(
         children: <Widget>[
-          Padding(
+          Container(
             padding: const EdgeInsets.all(8.0),
+            margin: const EdgeInsets.only(bottom: 16.0),
             child: new Row(
-              children: <Widget>[Text("票据标题"), Text(_bill.title ?? "暂无")],
+              children: <Widget>[
+                Container(
+                    padding: EdgeInsets.only(right: 15.0),
+                    child: Text(_bill.title ?? "暂无")),
+                Container(
+                  padding: EdgeInsets.only(left: 5.0, right: 5.0),
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                        width: 1.0, color: Theme.of(context).primaryColor),
+                    borderRadius: BorderRadius.all(Radius.circular(5.0)),
+                  ),
+                  child: Text(
+                    _bill.categoryName ?? "其它",
+                    style: TextStyle(color: Theme.of(context).primaryColor),
+                  ),
+                ),
+              ],
             ),
           ),
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: new Row(
-              children: <Widget>[Text("备注"), Text(_bill.remark ?? "暂无")],
+              children: <Widget>[
+                Container(
+                  child: Icon(Icons.event_note,
+                      color: Theme.of(context).primaryColor),
+                  padding: const EdgeInsets.only(right: 15.0),
+                ),
+                Text(_bill.remark ?? "暂无")
+              ],
+            ),
+          ),
+          Divider(
+            height: 1.0,
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: new Row(
+              children: <Widget>[
+                Container(
+                  child: Icon(
+                    Icons.perm_contact_calendar,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                  padding: const EdgeInsets.only(right: 15.0),
+                ),
+                Text(_bill.contact ?? "暂无")
+              ],
             ),
           ),
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: new Row(
-              children: <Widget>[Text("联系人"), Text(_bill.contact ?? "暂无")],
+              children: <Widget>[
+                Container(
+                  child:
+                      Icon(Icons.phone, color: Theme.of(context).primaryColor),
+                  padding: const EdgeInsets.only(right: 15.0),
+                ),
+                Text(_bill.phone ?? "暂无")
+              ],
             ),
+          ),
+          Divider(
+            height: 1.0,
           ),
           Padding(
             padding: const EdgeInsets.all(8.0),
-            child: new Row(
-              children: <Widget>[Text("联系方式"), Text(_bill.phone ?? "暂无")],
-            ),
+            child: Text("票据文件"),
           ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: new Row(
-              children: <Widget>[Text("分类"), Text(_bill.categoryName ?? "其它")],
-            ),
-          ),
-          ConstrainedBox(
-            constraints: BoxConstraints.expand(height: 250.0),
-            child: PictureSelector(
-              preview: true,
-              images: _bill.images.isEmpty
-                  ? new List()
-                  : _bill.images.split(",").map((String image) {
-                      return new File(image);
-                    }).toList(),
-            ),
+          PictureSelector(
+            preview: true,
+            images: _bill.images.isEmpty
+                ? new List()
+                : _bill.images.split(",").map((String image) {
+                    return new File(image);
+                  }).toList(),
           ),
         ],
       ),

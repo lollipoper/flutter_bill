@@ -88,6 +88,28 @@ class BillProvider {
     return list;
   }
 
+  Future<List<Bill>> getBillsWithLabel(String labelId) async {
+    List<Map> map = await db.query(tableBill,
+        distinct: false,
+        columns: [
+          columnImages,
+          columnCategory,
+          columnPhone,
+          columnContact,
+          columnRemark,
+          columnId,
+          columnTitle
+        ],
+        where: "$columnCategory = ?",
+        whereArgs: [labelId]);
+    List<Bill> list = new List();
+    map.forEach((Map map) {
+      var bill = Bill.fromMap(map);
+      list.add(bill);
+    });
+    return list;
+  }
+
   Future insert(Bill bill) async {
     bill.billId = DateTime.now().millisecond.toString();
     return db.insert(tableBill, bill.toMap());
@@ -115,6 +137,11 @@ class BillProvider {
 
   Future<int> delete(String billId) async {
     return db.delete(tableBill, where: "$columnId = ?", whereArgs: [billId]);
+  }
+
+  Future<int> deleteByLabel(String categoryId) async {
+    return db.delete(tableBill,
+        where: "$columnCategory= ?", whereArgs: [categoryId]);
   }
 
   Future<int> update(Bill bill) async {

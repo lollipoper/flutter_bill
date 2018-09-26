@@ -3,8 +3,8 @@ import 'dart:math';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bill/sql/bill.dart';
 import 'package:flutter_bill/sql/category.dart';
-import 'package:path/path.dart' show join;
 import 'package:sqflite/sqflite.dart';
 
 class CategoryListPage extends StatefulWidget {
@@ -27,9 +27,9 @@ class CategoryListPage extends StatefulWidget {
 
 class _CategoryListPageState extends State<CategoryListPage> {
   List<Category> mList = new List();
-  var _billProvider = CategoryProvider();
+  var _labelProvider = CategoryProvider();
+  var _billProvider = BillProvider();
   var textEditingController = TextEditingController();
-  var path;
 
   void _addCategory() async {
     showDialog(
@@ -51,7 +51,7 @@ class _CategoryListPageState extends State<CategoryListPage> {
               FlatButton(
                   onPressed: () async {
                     Navigator.pop(context);
-                    await _billProvider.insert(
+                    await _labelProvider.insert(
                         new Category(title: textEditingController.text));
                     getList();
                   },
@@ -63,8 +63,6 @@ class _CategoryListPageState extends State<CategoryListPage> {
 
   void initDb() async {
     Sqflite.setDebugModeOn(true);
-    var dbPath = await getDatabasesPath();
-    path = join(dbPath, "db.db");
     getList();
   }
 
@@ -92,8 +90,8 @@ class _CategoryListPageState extends State<CategoryListPage> {
         onRefresh: () async {
           mList.clear();
 
-          _billProvider.open().then((db) {
-            _billProvider.getCategories().then((List<Category> data) {
+          _labelProvider.open().then((db) {
+            _labelProvider.getCategories().then((List<Category> data) {
               setState(() {
                 mList = data;
               });
@@ -127,21 +125,71 @@ class _CategoryListPageState extends State<CategoryListPage> {
           Navigator.pop(context, mList[index]);
         },
         child: Container(
-          padding: const EdgeInsets.all(15.0),
-          child: Row(
+          padding: const EdgeInsets.only(left: 15.0, right: 15.0),
+          child: Column(
             children: <Widget>[
-              Text(mList[index].title),
-              IconButton(
-                  icon: Icon(Icons.edit),
-                  onPressed: () async {
-                    await _showEditCategoryDialog(index);
-                  })
+              Row(
+                children: <Widget>[
+                  new Expanded(child: Text(mList[index].title)),
+                  IconButton(
+                      icon: Icon(
+                        Icons.edit,
+                        color: Theme.of(context).primaryColor,
+                      ),
+                      onPressed: () async {
+                        await _showEditLabelDialog(index);
+                      }),
+                  IconButton(
+                    icon: Icon(Icons.delete,
+                        color: Theme.of(context).primaryColor),
+                    onPressed: () async {
+                      await _showDeleteLabelDialog(index);
+                    },
+                  )
+                ],
+              ),
+              new Divider(),
             ],
           ),
         ));
   }
 
-  Future _showEditCategoryDialog(int index) async {
+  Future _showDeleteLabelDialog(int index) async {
+    showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return new AlertDialog(
+            title: Text("删除标签"),
+            content: Text("该标签下的所有票据数据将被删除，是否确认？"),
+            actions: <Widget>[
+              FlatButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: Text("取消"),
+              ),
+              FlatButton(
+                onPressed: () async {
+                  await _deleteLabel(index);
+                },
+                child: Text("删除"),
+              )
+            ],
+          );
+        });
+  }
+
+  Future _deleteLabel(int index) async {
+    Navigator.pop(context);
+    await _labelProvider.delete(mList[index].categoryId);
+    _billProvider.open().then((db) {
+      _billProvider.deleteByLabel(mList[index].categoryId);
+    });
+    getList();
+  }
+
+  Future _showEditLabelDialog(int index) async {
     textEditingController.text = mList[index].title;
     showDialog(
         context: context,
@@ -161,7 +209,7 @@ class _CategoryListPageState extends State<CategoryListPage> {
                   child: Text("取消")),
               FlatButton(
                   onPressed: () async {
-                    await _editCategory(context, index);
+                    await _editLabel(context, index);
                   },
                   child: Text("修改"))
             ],
@@ -169,16 +217,16 @@ class _CategoryListPageState extends State<CategoryListPage> {
         });
   }
 
-  Future _editCategory(BuildContext context, int index) async {
+  Future _editLabel(BuildContext context, int index) async {
     Navigator.pop(context);
-    await _billProvider
+    await _labelProvider
         .update(mList[index]..title = textEditingController.text);
     getList();
   }
 
   void getList() async {
-    _billProvider.open().then((db) {
-      _billProvider.getCategories().then((List<Category> data) {
+    _labelProvider.open().then((db) {
+      _labelProvider.getCategories().then((List<Category> data) {
         setState(() {
           mList = data;
         });

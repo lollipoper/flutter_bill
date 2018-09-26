@@ -139,10 +139,7 @@ class _EditBillPageState extends State<EditBillPage> {
                 top: 10.0, left: 15.0, right: 15.0, bottom: 10.0),
             child: Text("票据文件"),
           ),
-          ConstrainedBox(
-            constraints: BoxConstraints.expand(height: 300.0),
-            child: pictureSelector,
-          ),
+          pictureSelector,
           Container(
             margin: EdgeInsets.all(15.0),
             child:

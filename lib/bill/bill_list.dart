@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bill/bill/detail_bill.dart';
 import 'package:flutter_bill/bill/update_bill.dart';
 import 'package:flutter_bill/sql/bill.dart';
+import 'package:flutter_bill/sql/category.dart';
 import 'package:sqflite/sqflite.dart';
 
 class BillListPage extends StatefulWidget {
@@ -29,6 +30,7 @@ class BillListPage extends StatefulWidget {
 class _MyHomePageState extends State<BillListPage> {
   List<Bill> mList = new List();
   var _billProvider = BillProvider();
+  var _categoryProvider = CategoryProvider();
   var path;
 
   void _addBill() async {
@@ -71,15 +73,7 @@ class _MyHomePageState extends State<BillListPage> {
       body: new RefreshIndicator(
         onRefresh: () async {
           mList.clear();
-
-          _billProvider.open().then((db) {
-            _billProvider.getBills().then((List<Bill> data) {
-              setState(() {
-                mList = data;
-              });
-              return data;
-            });
-          });
+          return getList();
         },
         child: new ListView.builder(
             physics: AlwaysScrollableScrollPhysics(),
@@ -113,46 +107,61 @@ class _MyHomePageState extends State<BillListPage> {
           getList();
         }
       },
-      child: Container(
-          padding: const EdgeInsets.all(8.0),
-          child: new Column(
-            children: <Widget>[
-              new Row(
+      child: Column(
+        children: <Widget>[
+          Container(
+              padding: const EdgeInsets.all(8.0),
+              child: new Column(
                 children: <Widget>[
-                  Expanded(
-                    child: new Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Container(
-                          child: Text(mList[index].title),
-                          padding: const EdgeInsets.only(bottom: 8.0),
+                  new Row(
+                    children: <Widget>[
+                      Expanded(
+                        child: new Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            Container(
+                              child: Text(mList[index].title),
+                              padding: const EdgeInsets.only(bottom: 8.0),
+                            ),
+                            Text(mList[index].categoryName)
+                          ],
                         ),
-                        Text(mList[index].categoryId)
-                      ],
-                    ),
+                      ),
+                      Image.file(
+                        File(mList[index]
+                            .images
+                            .substring(0, mList[index].images.indexOf(","))),
+                        width: 40.0,
+                        fit: BoxFit.cover,
+                        height: 40.0,
+                      )
+                    ],
                   ),
-                  Image.file(
-                    File(mList[index]
-                        .images
-                        .substring(0, mList[index].images.indexOf(","))),
-                    width: 40.0,
-                    fit: BoxFit.cover,
-                    height: 40.0,
-                  )
                 ],
-              ),
-              new Divider(),
-            ],
-          )),
+              )),
+          Divider()
+        ],
+      ),
     );
   }
 
   void getList() async {
-    _billProvider.open().then((db) {
-      _billProvider.getBills().then((List<Bill> data) {
-        setState(() {
-          mList = data;
-        });
+    mList.clear();
+    _categoryProvider.open().then((db) {
+      _categoryProvider.getCategories().then((List<Category> categories) {
+        categories.map((Category category) {
+          _billProvider.open().then((db) {
+            _billProvider
+                .getBillsWithLabel(category.categoryId)
+                .then((List<Bill> data) {
+              setState(() {
+                mList.addAll(data.map((Bill bill) {
+                  return bill..categoryName = category.title;
+                }).toList());
+              });
+            });
+          });
+        }).toList();
       });
     });
   }

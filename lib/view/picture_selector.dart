@@ -40,6 +40,9 @@ class _PictureSelectorState extends State<PictureSelector> {
       widget.images.add(new File(""));
     }
     return new GridView.count(
+      //子布局需要的是准确的高度
+      shrinkWrap: true,
+      physics: NeverScrollableScrollPhysics(),
       padding: EdgeInsets.only(left: 15.0, right: 15.0),
       crossAxisCount: 4,
       crossAxisSpacing: 5.0,
